@@ -347,7 +347,7 @@ INSERT INTO `sys_department` (`dept_name`, `dept_code`, `parent_id`, `descriptio
 -- 初始化管理员账户(密码: admin123)
 -- =============================================
 INSERT INTO `sys_user` (`username`, `password`, `real_name`, `role_id`, `phone`, `email`, `gender`, `title`, `status`) VALUES
-('admin', '$2b$12$dRdqIQcFdtFtLmX6NC7UxO4.ut6Kb5pxMdgnlC8UZhdLCX.o2m3yK', '系统管理员', 5, '13800000000', 'admin@hospital.com', 1, '高级工程师', 1);
+('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5Eh', '系统管理员', 5, '13800000000', 'admin@hospital.com', 1, '高级工程师', 1);
 
 -- =============================================
 -- 初始化排班规则

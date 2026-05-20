@@ -5,7 +5,7 @@
       <el-form :model="form" label-width="100px" style="max-width:500px">
         <el-form-item label="选择排班" required>
           <el-select v-model="form.scheduleId" placeholder="请选择排班" style="width:100%">
-            <el-option v-for="s in schedules" :key="s.id" :label="`${s.doctorName} - ${s.deptName} - ${s.date} ${s.period}`" :value="s.id" />
+            <el-option v-for="s in schedules" :key="s.id" :label="`${s.doctorName} - ${s.deptName} - ${s.scheduleDate} ${slotLabel(s.timeSlot)}`" :value="s.id" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -52,6 +52,7 @@ const loading = ref(false)
 
 function statusType(s) { return { 0:'info',1:'warning',2:'primary',3:'success' }[s]||'info' }
 function statusText(s) { return { 0:'已取消',1:'待就诊',2:'就诊中',3:'已完成' }[s]||'未知' }
+function slotLabel(ts) { return { 1: '上午', 2: '下午', 3: '夜诊' }[ts] || '' }
 
 async function loadSchedules() {
   const today = new Date().toISOString().slice(0, 10)

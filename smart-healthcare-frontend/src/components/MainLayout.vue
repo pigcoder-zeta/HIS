@@ -18,49 +18,19 @@
           <span>工作台</span>
         </el-menu-item>
 
-        <template v-if="userStore.roleId === 2">
-          <el-sub-menu index="doctor">
-            <template #title><el-icon><UserFilled /></el-icon><span>医生工作台</span></template>
-            <el-menu-item index="/doctor/today">今日待诊</el-menu-item>
-            <el-menu-item index="/doctor/record">病历管理</el-menu-item>
-            <el-menu-item index="/doctor/prescription">开具处方</el-menu-item>
+        <!-- 动态菜单：根据路由 meta 自动生成 -->
+        <template v-for="group in menuGroups" :key="group.key">
+          <el-sub-menu :index="group.key">
+            <template #title>
+              <el-icon><component :is="group.icon" /></el-icon>
+              <span>{{ group.label }}</span>
+            </template>
+            <el-menu-item
+              v-for="item in group.children"
+              :key="item.path"
+              :index="item.path"
+            >{{ item.meta.title }}</el-menu-item>
           </el-sub-menu>
-        </template>
-
-        <template v-if="userStore.roleId === 5">
-          <el-sub-menu index="patient">
-            <template #title><el-icon><User /></el-icon><span>患者服务</span></template>
-            <el-menu-item index="/patient/appointment">预约挂号</el-menu-item>
-            <el-menu-item index="/patient/records">我的病历</el-menu-item>
-            <el-menu-item index="/patient/exam">体检预约</el-menu-item>
-          </el-sub-menu>
-        </template>
-
-        <template v-if="userStore.roleId === 3">
-          <el-sub-menu index="pharmacy">
-            <template #title><el-icon><Goods /></el-icon><span>药房工作台</span></template>
-            <el-menu-item index="/pharmacy/prescriptions">处方审核</el-menu-item>
-            <el-menu-item index="/pharmacy/drugs">药品管理</el-menu-item>
-            <el-menu-item index="/pharmacy/stock">库存预警</el-menu-item>
-          </el-sub-menu>
-        </template>
-
-        <template v-if="userStore.roleId === 4">
-          <el-sub-menu index="medical">
-            <template #title><el-icon><OfficeBuilding /></el-icon><span>医务管理</span></template>
-            <el-menu-item index="/medical/schedule">排班管理</el-menu-item>
-            <el-menu-item index="/medical/departments">科室管理</el-menu-item>
-          </el-sub-menu>
-        </template>
-
-        <template v-if="userStore.roleId === 1">
-          <el-sub-menu index="admin">
-            <template #title><el-icon><Setting /></el-icon><span>系统管理</span></template>
-            <el-menu-item index="/admin/users">用户管理</el-menu-item>
-            <el-menu-item index="/admin/logs">日志监控</el-menu-item>
-          </el-sub-menu>
-          <el-menu-item index="/medical/schedule">排班管理</el-menu-item>
-          <el-menu-item index="/medical/departments">科室管理</el-menu-item>
         </template>
 
         <el-menu-item index="/ai/triage">
@@ -104,6 +74,53 @@ const activeMenu = computed(() => {
   if (path.startsWith('/admin')) return path
   if (path.startsWith('/medical')) return path
   return path
+})
+
+/**
+ * 根据角色和路由表动态生成菜单分组
+ */
+const menuGroupConfig = {
+  'ROLE_DOCTOR': {
+    key: 'doctor', label: '医生工作台', icon: 'UserFilled',
+    prefix: 'doctor',
+  },
+  'ROLE_PATIENT': {
+    key: 'patient', label: '患者服务', icon: 'User',
+    prefix: 'patient',
+  },
+  'ROLE_PHARMACIST': {
+    key: 'pharmacy', label: '药房工作台', icon: 'Goods',
+    prefix: 'pharmacy',
+  },
+  'ROLE_MEDICAL_ADMIN': {
+    key: 'medical', label: '医务管理', icon: 'OfficeBuilding',
+    prefix: 'medical',
+  },
+  'ROLE_SYSTEM_ADMIN': {
+    key: 'admin', label: '系统管理', icon: 'Setting',
+    prefix: 'admin',
+    extraGroups: [
+      { key: 'medical', label: '医务管理', icon: 'OfficeBuilding', prefix: 'medical' },
+    ],
+  },
+}
+
+const menuGroups = computed(() => {
+  const roleCode = userStore.roleCode
+  const config = menuGroupConfig[roleCode]
+  if (!config) return []
+
+  const groups = [config]
+  if (config.extraGroups) {
+    groups.push(...config.extraGroups)
+  }
+
+  return groups.map(g => {
+    const children = router.getRoutes().filter(r => {
+      return r.path.startsWith('/' + g.prefix) && r.path !== '/' + g.prefix && r.meta.title
+    })
+    return { key: g.key, label: g.label, icon: g.icon, children }
+  })
 })
 
 function handleLogout() {

@@ -5,6 +5,7 @@ import { login as loginApi, logout as logoutApi } from '@/api/auth'
 export const useUserStore = defineStore('user', () => {
   const token = ref(getStoredValue('token', ''))
   const userInfo = ref(getStoredJSON('user', null))
+  const permissions = ref(getStoredJSON('permissions', []))
 
 function getStoredValue(key, fallback) {
   try {
@@ -47,8 +48,12 @@ function getStoredJSON(key, fallback) {
       avatar: data.avatar,
     }
     userInfo.value = user
+    // 权限列表（如后端返回）
+    const perms = data.permissions || generateDefaultPermissions(data.roleCode)
+    permissions.value = perms
     localStorage.setItem('token', data.token)
     localStorage.setItem('user', JSON.stringify(user))
+    localStorage.setItem('permissions', JSON.stringify(perms))
     return data
   }
 
@@ -58,9 +63,25 @@ function getStoredJSON(key, fallback) {
     }
     token.value = ''
     userInfo.value = null
+    permissions.value = []
     localStorage.removeItem('token')
     localStorage.removeItem('user')
+    localStorage.removeItem('permissions')
   }
 
-  return { token, userInfo, isLoggedIn, roleCode, roleId, userId, roleName, login, logout }
+  /**
+   * 根据角色生成默认权限（后端未返回权限列表时的降级方案）
+   */
+  function generateDefaultPermissions(roleCode) {
+    const permMap = {
+      'ROLE_SYSTEM_ADMIN': ['*:*:*'],
+      'ROLE_DOCTOR': ['doctor:*:*', 'patient:record:*', 'ai:triage:*'],
+      'ROLE_PHARMACIST': ['pharmacy:*:*', 'drug:*:*'],
+      'ROLE_MEDICAL_ADMIN': ['medical:*:*', 'schedule:*:*', 'department:*:*'],
+      'ROLE_PATIENT': ['patient:appointment:*', 'patient:record:*', 'patient:exam:*', 'ai:triage:*'],
+    }
+    return permMap[roleCode] || []
+  }
+
+  return { token, userInfo, permissions, isLoggedIn, roleCode, roleId, userId, roleName, login, logout }
 })

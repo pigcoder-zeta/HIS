@@ -57,8 +57,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/doctor/**").hasAuthority("ROLE_DOCTOR")
                 // 药房接口
                 .requestMatchers("/api/v1/pharmacy/**").hasAuthority("ROLE_PHARMACIST")
-                // 医务科接口
-                .requestMatchers("/api/v1/medical/**").hasAuthority("ROLE_MEDICAL_ADMIN")
+                // 医务科接口（管理员也可管理）
+                .requestMatchers("/api/v1/medical/**").hasAnyAuthority("ROLE_MEDICAL_ADMIN", "ROLE_SYSTEM_ADMIN")
                 // 管理员接口
                 .requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_SYSTEM_ADMIN")
                 // 通用接口（需登录）
