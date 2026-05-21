@@ -69,8 +69,10 @@ public class AIService {
         String userMessage = "患者症状描述：" + symptomDescription + "\n请根据以上症状推荐科室。";
 
         String response = callLLM(TRIAGE_SYSTEM_PROMPT, userMessage);
+        // 提取纯净JSON（去除markdown代码块等包裹）
+        String cleanJson = extractJson(response);
         try {
-            JSONObject json = JSON.parseObject(response);
+            JSONObject json = JSON.parseObject(cleanJson);
             AITriageResponse result = new AITriageResponse();
             result.setDepartments(json.getList("departments", String.class));
             result.setAdvice(json.getString("advice"));
@@ -97,9 +99,10 @@ public class AIService {
         new Thread(() -> {
             try {
                 String response = callLLM(TRIAGE_SYSTEM_PROMPT, userMessage);
-                // 逐字发送（模拟流式）
-                for (int i = 0; i < response.length(); i++) {
-                    String chunk = response.substring(i, Math.min(i + 5, response.length()));
+                // 提取纯净JSON后再流式发送，确保前端能正确解析
+                String cleanJson = extractJson(response);
+                for (int i = 0; i < cleanJson.length(); i += 5) {
+                    String chunk = cleanJson.substring(i, Math.min(i + 5, cleanJson.length()));
                     emitter.send(SseEmitter.event().data(chunk));
                     Thread.sleep(30);
                 }
@@ -108,7 +111,8 @@ public class AIService {
             } catch (Exception e) {
                 log.error("AI导诊流式输出异常", e);
                 try {
-                    emitter.send(SseEmitter.event().data("服务暂时不可用，请稍后重试"));
+                    emitter.send(SseEmitter.event().data("{\"departments\":[\"内科\",\"急诊科\"],\"advice\":\"服务暂时不可用，请稍后重试\"}"));
+                    emitter.send(SseEmitter.event().data("[DONE]"));
                     emitter.complete();
                 } catch (IOException ex) {
                     emitter.completeWithError(ex);
@@ -124,8 +128,10 @@ public class AIService {
      */
     public Map<String, String> generateMedicalRecord(String doctorNotes) {
         String response = callLLM(MEDICAL_RECORD_PROMPT, doctorNotes);
+        // 提取纯净JSON（去除markdown代码块等包裹）
+        String cleanJson = extractJson(response);
         try {
-            JSONObject json = JSON.parseObject(response);
+            JSONObject json = JSON.parseObject(cleanJson);
             return Map.of(
                     "chiefComplaint", json.getString("chiefComplaint") != null ? json.getString("chiefComplaint") : "",
                     "presentIllness", json.getString("presentIllness") != null ? json.getString("presentIllness") : "",
@@ -178,6 +184,47 @@ public class AIService {
             log.error("AI API调用失败", e);
             return simulateResponse(userMessage);
         }
+    }
+
+    /**
+     * 从LLM响应中提取纯净JSON
+     * 处理常见的LLM输出格式问题：
+     * - markdown代码块包裹 (```json ... ```)
+     * - 前后多余的文字说明
+     * - 中文引号/转义问题
+     */
+    private String extractJson(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return "{}";
+        }
+        String content = raw.trim();
+
+        // 1. 去除markdown代码块标记 ```json ... ``` 或 ``` ... ```
+        if (content.startsWith("```")) {
+            int firstNewline = content.indexOf('\n');
+            if (firstNewline > 0) {
+                String afterOpen = content.substring(firstNewline + 1);
+                int lastBacktick = afterOpen.lastIndexOf("```");
+                if (lastBacktick > 0) {
+                    content = afterOpen.substring(0, lastBacktick).trim();
+                } else {
+                    content = afterOpen.trim();
+                }
+            }
+        }
+
+        // 2. 尝试找到第一个 { 和最后一个 } 提取JSON对象
+        int firstBrace = content.indexOf('{');
+        int lastBrace = content.lastIndexOf('}');
+        if (firstBrace >= 0 && lastBrace > firstBrace) {
+            content = content.substring(firstBrace, lastBrace + 1);
+        }
+
+        // 3. 清理常见的格式问题：中文引号替换为转义
+        content = content.replace('\u201C', '"').replace('\u201D', '"'); // " "
+        content = content.replace('\u2018', '\'').replace('\u2019', '\''); // ' '
+
+        return content.trim();
     }
 
     /**

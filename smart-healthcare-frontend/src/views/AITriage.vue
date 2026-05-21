@@ -169,17 +169,33 @@ async function sendSyncMessage(text, aiMsgIdx) {
 async function sendStreamMessage(text, aiMsgIdx) {
   streaming.value = true
   let fullContent = ''
+  let reader = null
+  // 安全超时：30秒后强制结束流式状态
+  const safetyTimer = setTimeout(() => {
+    streaming.value = false
+    if (reader) {
+      try { reader.cancel() } catch {}
+    }
+  }, 30000)
+
   try {
     const response = await aiTriageStream({ symptomDescription: text })
-    const reader = response.body.getReader()
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    reader = response.body.getReader()
     const decoder = new TextDecoder()
+    let lineBuffer = ''  // 缓冲区：处理TCP分片导致的跨包断行
 
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
       const chunk = decoder.decode(value, { stream: true })
-      // 解析 SSE 格式
-      const lines = chunk.split('\n')
+      // 拼接到缓冲区，按完整行切割
+      lineBuffer += chunk
+      const lines = lineBuffer.split('\n')
+      // 最后一段可能是不完整的行，保留在缓冲区
+      lineBuffer = lines.pop() || ''
       for (const line of lines) {
         if (line.startsWith('data:')) {
           const data = line.substring(5).trim()
@@ -193,29 +209,67 @@ async function sendStreamMessage(text, aiMsgIdx) {
         }
       }
     }
-
-    // 尝试解析结构化结果
-    try {
-      const json = JSON.parse(fullContent)
-      if (json.departments) {
-        messages.value[aiMsgIdx] = {
-          role: 'ai',
-          content: `根据您的描述，建议就诊：${json.departments?.join('、') || '未知科室'}`,
-          result: json,
-          loading: false,
+    // 处理流结束后缓冲区中剩余的完整行
+    for (const line of lineBuffer.split('\n')) {
+      if (line.startsWith('data:')) {
+        const data = line.substring(5).trim()
+        if (data !== '[DONE]') {
+          fullContent += data
         }
       }
-    } catch {
-      // 不是 JSON，保持纯文本显示
     }
-  } catch {
+
+    // 尝试解析结构化结果（支持markdown代码块包裹的JSON）
+    const parsed = tryParseAIResponse(fullContent)
+    if (parsed) {
+      messages.value[aiMsgIdx] = {
+        role: 'ai',
+        content: parsed.departments?.join('、') || '未知科室',
+        result: parsed,
+        loading: false,
+      }
+    }
+  } catch (err) {
+    console.error('流式导诊失败:', err)
     if (!fullContent) {
       messages.value[aiMsgIdx] = { role: 'ai', content: '抱歉，AI导诊服务暂时不可用，请稍后再试。', loading: false }
     }
   } finally {
+    clearTimeout(safetyTimer)
     streaming.value = false
-    await scrollToBottom()
+    try { await scrollToBottom() } catch {}
   }
+}
+
+// 尝试从AI响应中提取结构化JSON（处理markdown代码块包裹等格式问题）
+function tryParseAIResponse(raw) {
+  if (!raw) return null
+  try {
+    // 直接尝试解析
+    const json = JSON.parse(raw)
+    if (json.departments) return json
+  } catch { /* 继续尝试其他方式 */ }
+
+  // 尝试去除 markdown 代码块包裹后解析
+  try {
+    let cleaned = raw.trim()
+    if (cleaned.startsWith('```')) {
+      const lines = cleaned.split('\n')
+      // 移除首行 (```json 或 ```) 和末行 (```)
+      const contentLines = lines.slice(1, lines[lines.length - 1] === '```' ? -1 : lines.length)
+      cleaned = contentLines.join('\n').trim()
+    }
+    // 尝试找到 JSON 对象 { ... }
+    const start = cleaned.indexOf('{')
+    const end = cleaned.lastIndexOf('}')
+    if (start >= 0 && end > start) {
+      cleaned = cleaned.substring(start, end + 1)
+    }
+    const json = JSON.parse(cleaned)
+    if (json.departments) return json
+  } catch { /* 无法解析 */ }
+
+  return null
 }
 
 // 清空对话
