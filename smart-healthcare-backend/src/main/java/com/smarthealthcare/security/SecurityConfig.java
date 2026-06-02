@@ -51,12 +51,12 @@ public class SecurityConfig {
                 // AI导诊接口患者可访问
                 .requestMatchers("/api/v1/ai/triage/**").hasAnyAuthority("ROLE_PATIENT", "ROLE_DOCTOR",
                         "ROLE_PHARMACIST", "ROLE_MEDICAL_ADMIN", "ROLE_SYSTEM_ADMIN")
-                // 患者接口
-                .requestMatchers("/api/v1/patient/**").hasAuthority("ROLE_PATIENT")
-                // 医生接口
-                .requestMatchers("/api/v1/doctor/**").hasAuthority("ROLE_DOCTOR")
-                // 药房接口
-                .requestMatchers("/api/v1/pharmacy/**").hasAuthority("ROLE_PHARMACIST")
+                // 患者接口（管理员也可管理）
+                .requestMatchers("/api/v1/patient/**").hasAnyAuthority("ROLE_PATIENT", "ROLE_SYSTEM_ADMIN")
+                // 医生接口（管理员也可管理）
+                .requestMatchers("/api/v1/doctor/**").hasAnyAuthority("ROLE_DOCTOR", "ROLE_SYSTEM_ADMIN")
+                // 药房接口（管理员也可管理）
+                .requestMatchers("/api/v1/pharmacy/**").hasAnyAuthority("ROLE_PHARMACIST", "ROLE_SYSTEM_ADMIN")
                 // 医务科接口（管理员也可管理）
                 .requestMatchers("/api/v1/medical/**").hasAnyAuthority("ROLE_MEDICAL_ADMIN", "ROLE_SYSTEM_ADMIN")
                 // 管理员接口

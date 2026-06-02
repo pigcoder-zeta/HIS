@@ -7,7 +7,7 @@
       </div>
       <el-table :data="list" border stripe v-loading="loading">
         <el-table-column prop="id" label="ID" width="60" />
-        <el-table-column prop="name" label="科室名称" width="180" />
+        <el-table-column prop="deptName" label="科室名称" width="180" />
         <el-table-column prop="description" label="描述" min-width="200" />
         <el-table-column label="操作" width="140">
           <template #default="{ row }">
@@ -19,7 +19,7 @@
 
     <el-dialog v-model="showAdd" :title="editing?.id?'编辑科室':'新增科室'" width="400px" destroy-on-close>
       <el-form :model="form" label-width="80px">
-        <el-form-item label="名称"><el-input v-model="form.name" /></el-form-item>
+        <el-form-item label="名称"><el-input v-model="form.deptName" /></el-form-item>
         <el-form-item label="描述"><el-input v-model="form.description" type="textarea" /></el-form-item>
       </el-form>
       <template #footer>
@@ -39,7 +39,7 @@ const list = ref([])
 const loading = ref(false)
 const showAdd = ref(false)
 const editing = ref({})
-const form = reactive({ name: '', description: '' })
+const form = reactive({ deptName: '', description: '' })
 
 async function load() {
   loading.value = true
@@ -53,7 +53,7 @@ async function save() {
     if (editing.value?.id) { await updateDepartment({ ...form, id: editing.value.id }) } else { await addDepartment(form) }
     ElMessage.success('保存成功')
     showAdd.value = false
-    Object.assign(form, { name: '', description: '' })
+    Object.assign(form, { deptName: '', description: '' })
     editing.value = {}
     load()
   } catch {}

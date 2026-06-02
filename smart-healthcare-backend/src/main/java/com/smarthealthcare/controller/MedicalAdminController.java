@@ -85,9 +85,13 @@ public class MedicalAdminController {
 
     @Operation(summary = "医生列表")
     @GetMapping("/doctor")
-    public Result<List<SysUser>> listDoctors() {
-        return Result.success(userMapper.selectList(
+    public Result<List<SysUser>> listDoctors(@RequestParam(required = false) Long deptId) {
+        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysUser> wrapper =
                 new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysUser>()
-                        .eq(SysUser::getRoleId, 2L))); // 角色2 = 医生
+                        .eq(SysUser::getRoleId, 2L); // 角色2 = 医生
+        if (deptId != null) {
+            wrapper.eq(SysUser::getDeptId, deptId);
+        }
+        return Result.success(userMapper.selectList(wrapper));
     }
 }

@@ -201,10 +201,11 @@ async function sendStreamMessage(text, aiMsgIdx) {
           const data = line.substring(5).trim()
           if (data === '[DONE]') continue
           fullContent += data
+          // 流式过程中只显示加载状态，不显示原始JSON碎片
           messages.value[aiMsgIdx] = {
             role: 'ai',
-            content: fullContent,
-            loading: false,
+            content: '',
+            loading: true,
           }
         }
       }
@@ -219,7 +220,7 @@ async function sendStreamMessage(text, aiMsgIdx) {
       }
     }
 
-    // 尝试解析结构化结果（支持markdown代码块包裹的JSON）
+    // 尝试解析结构化结果
     const parsed = tryParseAIResponse(fullContent)
     if (parsed) {
       messages.value[aiMsgIdx] = {
@@ -228,6 +229,15 @@ async function sendStreamMessage(text, aiMsgIdx) {
         result: parsed,
         loading: false,
       }
+    } else if (fullContent) {
+      // 解析失败但有内容，显示原始文本作为降级
+      messages.value[aiMsgIdx] = {
+        role: 'ai',
+        content: fullContent.substring(0, 500),
+        loading: false,
+      }
+    } else {
+      messages.value[aiMsgIdx] = { role: 'ai', content: '抱歉，AI导诊服务暂时不可用，请稍后再试。', loading: false }
     }
   } catch (err) {
     console.error('流式导诊失败:', err)
@@ -244,31 +254,34 @@ async function sendStreamMessage(text, aiMsgIdx) {
 // 尝试从AI响应中提取结构化JSON（处理markdown代码块包裹等格式问题）
 function tryParseAIResponse(raw) {
   if (!raw) return null
-  try {
-    // 直接尝试解析
-    const json = JSON.parse(raw)
-    if (json.departments) return json
-  } catch { /* 继续尝试其他方式 */ }
-
-  // 尝试去除 markdown 代码块包裹后解析
-  try {
-    let cleaned = raw.trim()
-    if (cleaned.startsWith('```')) {
-      const lines = cleaned.split('\n')
-      // 移除首行 (```json 或 ```) 和末行 (```)
-      const contentLines = lines.slice(1, lines[lines.length - 1] === '```' ? -1 : lines.length)
-      cleaned = contentLines.join('\n').trim()
+  let text = raw.trim()
+  
+  // 1. 去除 markdown 代码块包裹
+  if (text.startsWith('```')) {
+    const lines = text.split('\n')
+    if (lines.length >= 3) {
+      lines.shift() // 移除首行 ```json
+      if (lines[lines.length - 1].trim() === '```') lines.pop()
+      text = lines.join('\n').trim()
     }
-    // 尝试找到 JSON 对象 { ... }
-    const start = cleaned.indexOf('{')
-    const end = cleaned.lastIndexOf('}')
-    if (start >= 0 && end > start) {
-      cleaned = cleaned.substring(start, end + 1)
-    }
-    const json = JSON.parse(cleaned)
+  }
+  
+  // 2. 提取 JSON 对象 { ... }
+  const start = text.indexOf('{')
+  const end = text.lastIndexOf('}')
+  if (start >= 0 && end > start) {
+    text = text.substring(start, end + 1)
+  }
+  
+  // 3. 尝试解析
+  try {
+    const json = JSON.parse(text)
     if (json.departments) return json
-  } catch { /* 无法解析 */ }
+  } catch (e) {
+    console.warn('AI响应JSON解析失败:', e, '\n原始内容:', text.substring(0, 200))
+  }
 
+  // 4. 降级：如果无法解析，至少尝试提取信息
   return null
 }
 

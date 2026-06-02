@@ -347,7 +347,18 @@ INSERT INTO `sys_department` (`dept_name`, `dept_code`, `parent_id`, `descriptio
 -- 初始化管理员账户(密码: admin123)
 -- =============================================
 INSERT INTO `sys_user` (`username`, `password`, `real_name`, `role_id`, `phone`, `email`, `gender`, `title`, `status`) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5Eh', '系统管理员', 5, '13800000000', 'admin@hospital.com', 1, '高级工程师', 1);
+('admin', '$2b$12$Ub88Vpd8M0xi1gcai2iIaukhJ06Ck/Ppg.XQ7kzwRFzLC0OIgN3kK', '系统管理员', 5, '13800000000', 'admin@hospital.com', 1, '高级工程师', 1),
+('zhangsan', '$2b$12$Ub88Vpd8M0xi1gcai2iIaukhJ06Ck/Ppg.XQ7kzwRFzLC0OIgN3kK', '张三', 2, 1, '13800000001', 'zhangsan@hospital.com', 1, '主任医师', 1),
+('lisi', '$2b$12$Ub88Vpd8M0xi1gcai2iIaukhJ06Ck/Ppg.XQ7kzwRFzLC0OIgN3kK', '李四', 2, 4, '13800000002', 'lisi@hospital.com', 1, '副主任医师', 1),
+('wangwu', '$2b$12$Ub88Vpd8M0xi1gcai2iIaukhJ06Ck/Ppg.XQ7kzwRFzLC0OIgN3kK', '王五', 2, 1, '13800000003', 'wangwu@hospital.com', 2, '主治医师', 1),
+('zhaoliu', '$2b$12$Ub88Vpd8M0xi1gcai2iIaukhJ06Ck/Ppg.XQ7kzwRFzLC0OIgN3kK', '赵六', 2, 5, '13800000004', 'zhaoliu@hospital.com', 1, '主任医师', 1),
+('sunqi', '$2b$12$Ub88Vpd8M0xi1gcai2iIaukhJ06Ck/Ppg.XQ7kzwRFzLC0OIgN3kK', '孙七', 2, 6, '13800000005', 'sunqi@hospital.com', 2, '副主任医师', 1),
+('zhouba', '$2b$12$Ub88Vpd8M0xi1gcai2iIaukhJ06Ck/Ppg.XQ7kzwRFzLC0OIgN3kK', '周八', 2, 7, '13800000006', 'zhouba@hospital.com', 2, '主任医师', 1),
+('liujiu', '$2b$12$Ub88Vpd8M0xi1gcai2iIaukhJ06Ck/Ppg.XQ7kzwRFzLC0OIgN3kK', '刘九', 2, 2, '13800000007', 'liujiu@hospital.com', 1, '副主任医师', 1),
+('chenshi', '$2b$12$Ub88Vpd8M0xi1gcai2iIaukhJ06Ck/Ppg.XQ7kzwRFzLC0OIgN3kK', '陈十', 2, 3, '13800000008', 'chenshi@hospital.com', 2, '主任医师', 1),
+('linyi', '$2b$12$Ub88Vpd8M0xi1gcai2iIaukhJ06Ck/Ppg.XQ7kzwRFzLC0OIgN3kK', '林一', 2, 8, '13800000009', 'linyi@hospital.com', 2, '主治医师', 1),
+('heer', '$2b$12$Ub88Vpd8M0xi1gcai2iIaukhJ06Ck/Ppg.XQ7kzwRFzLC0OIgN3kK', '何二', 2, 9, '13800000010', 'heer@hospital.com', 1, '副主任医师', 1),
+('wusan', '$2b$12$Ub88Vpd8M0xi1gcai2iIaukhJ06Ck/Ppg.XQ7kzwRFzLC0OIgN3kK', '吴三', 2, 10, '13800000011', 'wusan@hospital.com', 1, '主任医师', 1);
 
 -- =============================================
 -- 初始化排班规则

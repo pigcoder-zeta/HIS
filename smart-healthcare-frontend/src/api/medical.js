@@ -7,4 +7,4 @@ export const cancelSchedule = (id) => request.put(`/medical/schedule/${id}/cance
 export const getDepartments = () => request.get('/medical/department')
 export const addDepartment = (data) => request.post('/medical/department', data)
 export const updateDepartment = (data) => request.put('/medical/department', data)
-export const getDoctors = () => request.get('/medical/doctor')
+export const getDoctors = (deptId) => request.get('/medical/doctor', { params: { deptId } })

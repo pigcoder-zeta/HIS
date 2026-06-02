@@ -43,13 +43,13 @@ jwt:
   secret: SmF2YVNwcmluZ0Jvb3RTbWFydEhlYWx0aGNhcmVKV1RTZWNyZXRLZXkyMDI0
   expiration: 86400000  # 24小时
 
-# AI大模型配置(请替换为实际API密钥)
+# AI大模型配置(通过环境变量设置API密钥)
 ai:
   llm:
     provider: openai  # openai / zhipu / qianfan
-    api-key: your-api-key-here
-    api-url: https://api.openai.com/v1/chat/completions
-    model: gpt-3.5-turbo
+    api-key: ${AI_API_KEY:your-api-key-here}
+    api-url: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+    model: deepseek-v4-flash
 
 # Knife4j API文档配置
 springdoc:

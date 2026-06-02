@@ -154,10 +154,10 @@ router.beforeEach((to, from, next) => {
   // 未登录 → 登录页
   if (!token) return next('/login')
 
-  // 角色权限检查
+  // 角色权限检查（系统管理员可访问所有页面）
   if (to.meta.allowedRoles) {
     const userRole = userInfo?.roleCode
-    if (!to.meta.allowedRoles.includes(userRole)) {
+    if (userRole !== 'ROLE_SYSTEM_ADMIN' && !to.meta.allowedRoles.includes(userRole)) {
       // 无权限 → 返回工作台
       return next('/dashboard')
     }

@@ -101,6 +101,9 @@ const menuGroupConfig = {
     prefix: 'admin',
     extraGroups: [
       { key: 'medical', label: '医务管理', icon: 'OfficeBuilding', prefix: 'medical' },
+      { key: 'doctor', label: '医生工作台', icon: 'UserFilled', prefix: 'doctor' },
+      { key: 'patient', label: '患者服务', icon: 'User', prefix: 'patient' },
+      { key: 'pharmacy', label: '药房工作台', icon: 'Goods', prefix: 'pharmacy' },
     ],
   },
 }
